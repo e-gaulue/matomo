@@ -53,6 +53,21 @@ class ResponseBuilderTest extends \PHPUnit\Framework\TestCase
 </result>', $response);
     }
 
+    public function testGetResponseExceptionReturnsTheMessageWithoutABacktrace()
+    {
+        $previousPassword = Config::getInstance()->database['password'];
+        Config::getInstance()->database['password'] = 'myTestDbPass';
+
+        try {
+            $builder = new ResponseBuilder('json', array(), false);
+            $response = $builder->getResponseException(new Exception('Something failed for myTestDbPass.'));
+        } finally {
+            Config::getInstance()->database['password'] = $previousPassword;
+        }
+
+        $this->assertStringStartsWith('Something failed for myTestDbPass.', json_decode($response, true)['message']);
+    }
+
     public function testGetResponseSendsDataResponseHeadersForAnApiHttpRequest()
     {
         $_GET = ['module' => 'API'];
