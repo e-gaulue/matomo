@@ -25,7 +25,8 @@ class Response
 
     private $content;
 
-    private bool $keepExceptionResponse = false;
+    // an error status code was sent, which the response must not replace
+    private bool $keepResponseCode = false;
 
     public function init(Tracker $tracker)
     {
@@ -57,8 +58,11 @@ class Response
     public function outputException(Tracker $tracker, Exception $e, $statusCode)
     {
         // not once the request was recorded, as matomo.js resends a request answered with an error
-        $this->keepExceptionResponse = !$tracker->hasLoggedRequests();
-        Common::sendResponseCode($statusCode);
+        $this->keepResponseCode = !$tracker->hasLoggedRequests();
+
+        if ($this->keepResponseCode) {
+            Common::sendResponseCode($statusCode);
+        }
 
         if ($tracker->isDebugModeEnabled()) {
             echo "\nAn exception occurred: " . $this->getMessageFromException($e) . "\n\n";
@@ -69,7 +73,7 @@ class Response
 
     public function outputResponse(Tracker $tracker)
     {
-        if ($this->keepExceptionResponse) {
+        if ($this->keepResponseCode) {
             Common::printDebug("Exception was output => keep its response code");
         } elseif (!$tracker->shouldRecordStatistics()) {
             Common::sendResponseCode(503);
@@ -167,7 +171,7 @@ class Response
         }
 
         if ($this->isImageDisabled()) {
-            if (!$this->keepExceptionResponse) {
+            if (!$this->keepResponseCode) {
                 Common::sendResponseCode(204);
             }
             return;
