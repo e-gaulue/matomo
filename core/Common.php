@@ -1168,6 +1168,7 @@ class Common
      * Sends the given response code.
      *
      * @param int|string $code  Eg 204
+     * @throws Exception
      */
     public static function sendResponseCode($code)
     {
