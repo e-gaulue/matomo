@@ -247,6 +247,18 @@ enable_processing_unique_visitors_range = 0
 ; would still only be counted as one. only relevant when using plugins that group sites together
 enable_processing_unique_visitors_multiple_sites = 0
 
+; set to 1 to estimate a website's Unique Visitors and Users for that period type instead of counting them exactly.
+; this is much faster for long periods and segments, and the estimate is usually within 2%. day periods are always counted.
+; to estimate periods archived before, invalidate their days (core:invalidate-report-data --periods=day) while the raw logs
+; still exist. until then they are counted exactly if enable_processing_unique_visitors_* is 1, and have no Unique Visitors otherwise
+enable_processing_estimated_unique_visitors_week = 0
+enable_processing_estimated_unique_visitors_month = 0
+enable_processing_estimated_unique_visitors_year = 0
+enable_processing_estimated_unique_visitors_range = 0
+
+; precision of the estimate, from 4 to 18. higher values are more accurate but use more storage (up to about 14 KB per archive at 14)
+unique_visitors_estimate_precision = 14
+
 ; The list of periods that are available in the Matomo calendar
 ; Example use case: custom date range requests are processed in real time,
 ; so they may take a few minutes on very high traffic website: you may remove "range" below to disable this period
@@ -725,6 +737,9 @@ show_update_notification_to_superusers_only = 0
 ; notifications to hide, by ID. Only some notifications can be hidden, e.g. the warning about the PHP security
 ; advisory of 2026-10-21, when your Linux distribution has backported the fix without changing the PHP version number:
 ;disabled_notifications[] = PhpSecurityAdvisory_2026_10_21
+;
+; or the database EOL warning, when the Linux distribution continues providing security updates:
+;disabled_notifications[] = DatabaseVersionCheck
 
 ; Set to 1 if you're using https on your Matomo server and Matomo can't detect it,
 ; e.g., a reverse proxy using https-to-http, or a web server that doesn't

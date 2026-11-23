@@ -8,6 +8,8 @@ The Product Changelog at **[matomo.org/changelog](https://matomo.org/changelog)*
 
 ### New config.ini.php settings
 * `[log] log_format` (and `log_format_<writer>` per writer) lets the file, database, errorlog and syslog log writers write `json`, `loggly` or `logstash` instead of `text`.
+* `[General] enable_processing_estimated_unique_visitors_week`, `_month`, `_year` and `_range` (default `0`) estimate a website's unique visitors and users for that period instead of counting them from the visit logs. To estimate periods archived before, invalidate their days.
+* `[General] unique_visitors_estimate_precision` (default `14`, from `4` to `18`) sets how accurate the estimate is.
 * `[General] archive_failure_retry_delays` and `[General] archive_failure_max_attempts` set how long `core:archive` waits before retrying a failed archive and after how many failed attempts it stops retrying. Jobs still running after `[General] archive_failure_recovery_timeout` now count as a failed attempt instead of being queued again right away.
 
 ### New APIs
@@ -17,6 +19,8 @@ The Product Changelog at **[matomo.org/changelog](https://matomo.org/changelog)*
 * The `ExpandOnHover` Vue directive now takes the `expandedClass` option of `ExpandOnClick`, and both directives accept a list of classes for it.
 * The Monolog plugin's DI entry `log.formatter.classes` maps log format names to formatter classes and can be extended by plugins to add log formats.
 * `archive_invalidations.status` can now be `Piwik\Archive\ArchiveInvalidator::INVALIDATION_STATUS_ON_HOLD` (`2`): `core:archive` doesn't process such invalidations until the failed archive they wait for can be retried.
+* The new event `SitesManager.globalSettingsUpdated` is posted after the global website settings were saved on the global settings page. Its single array parameter holds the current settings after the save, with the same keys as the `SitesManager.getGlobalSettings` controller action, except `exclusionTypeForQueryParamsPolicyControlled`. If the save fails part way, the event is posted only if the values saved before the failure changed a setting.
+* The new event `CoreAdminHome.mailSettingsUpdated` is posted after the email server settings were saved on the general settings page. Its single array parameter holds the saved settings and `password_set`, but never the password.
 * New tracker request parameter `hb`: the JavaScript tracker sends `hb=1` with the `ping=1` request of its heartbeat timer (`enableHeartBeatTimer()`), and other tracking clients can send `ping=1&hb=1` with the pageview's `pv_id` to get the same behaviour.
 * A page time measured by a heartbeat is no longer raised by a later pageview in the same visit, only by requests with the same `pv_id`.
 * The `log_page_view_time` log table has a new `has_heartbeat` column.
@@ -36,9 +40,14 @@ The Product Changelog at **[matomo.org/changelog](https://matomo.org/changelog)*
   * A module that selects its own set of sites, such as `MultiSites.getAll`, is labelled on the days its rows cover, which are UTC's days when it covers more than one site.
   * A scheduled report that holds `MultiSites` reports next to site reports takes its date line and file name from the site reports.
 * A segment using `!=` with the value `0`, or a value its segment maps to `0` such as `visitorType!=new`, `deviceType!=desktop` or `visitEcommerceStatus!=none`, now also matches the visits where the segment's value is `NULL`, as `!=` already did for any other value.
+* For estimated periods, `VisitsSummary.get`, `VisitFrequency.get`, `AIAgents.get` and `API.get` return estimated `nb_uniq_visitors` and `nb_users`, and a new `uniques_estimated` column (`1` when estimated). `VisitFrequency.get` and `AIAgents.get` return it per visitor type, for example `uniques_estimated_returning`. A period without a unique count now leaves out `nb_uniq_visitors` and `nb_users` instead of returning `0`, also in `API.getProcessedReport`, `ImageGraph` and `VisitsSummary.getUniqueVisitors` / `getUsers`.
 
 ### Archiving
 * Different `core:archive` processes can now archive "All visits" and segments of the same site and an overlapping period at the same time. State that an archiver shares across a site's segments must therefore also be safe to use while the "All visits" archive is processed.
+* Plugins reading `nb_uniq_visitors` or `nb_users` from the `VisitsSummary` archive of an estimated period get the estimate. The archive's `uniques_estimated` record is `1` when the value was estimated.
+
+### New PHP events
+* New event `Metrics.formatEvolutionValue` that lets plugins format their metric values in the row evolution popover.
 
 ### Other changes
 * Action names stored in `log_action.name` are now truncated to 4096 characters if they exceed the column limit.
