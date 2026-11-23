@@ -77,6 +77,7 @@ class Response
             Common::printDebug("Exception was output => keep its response code");
         } elseif (!$tracker->shouldRecordStatistics()) {
             Common::sendResponseCode(503);
+            $this->keepResponseCode = true;
             $this->outputApiResponse($tracker);
             Common::printDebug("Logging disabled, display transparent logo");
         } elseif (!$tracker->hasLoggedRequests()) {

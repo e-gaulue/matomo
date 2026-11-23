@@ -9,6 +9,7 @@
 
 namespace Piwik\Plugins\BulkTracking\tests\Unit;
 
+use Piwik\Common;
 use Piwik\Plugins\BulkTracking\Tracker\Response;
 use Piwik\Tests\Framework\Mock\Tracker;
 use Piwik\Tests\Framework\TestCase\UnitTestCase;
@@ -82,6 +83,31 @@ class ResponseTest extends UnitTestCase
         $content = $this->response->getOutput();
 
         $this->assertEquals('{"status":"success","tracked":5,"invalid":0}', $content);
+    }
+
+    public function testOutputResponseShouldAnswer503IfTrackerIsDisabled()
+    {
+        Common::$headersSentInTests = [];
+        $tracker = new Tracker();
+        $tracker->disableShouldRecordStatistics();
+
+        $this->response->outputResponse($tracker);
+
+        $this->assertEquals('{"status":"error","tracked":0,"invalid":0}', $this->response->getOutput());
+        $this->assertArrayHasKey('HTTP/1.1 503 Service Unavailable', Common::$headersSentInTests);
+    }
+
+    public function testOutputResponseShouldAnswer503WithoutBodyIfTrackerIsDisabledAndNoResponseIsRequested()
+    {
+        Common::$headersSentInTests = [];
+        $tracker = new Tracker();
+        $tracker->disableShouldRecordStatistics();
+        $this->response->setShouldSendResponse(false);
+
+        $this->response->outputResponse($tracker);
+
+        $this->assertEquals('', $this->response->getOutput());
+        $this->assertArrayHasKey('HTTP/1.1 503 Service Unavailable', Common::$headersSentInTests);
     }
 
     public function testOutputResponseShouldNotOutputAnythingIfExceptionResponseAlreadySent()

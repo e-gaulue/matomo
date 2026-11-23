@@ -47,6 +47,16 @@ class Response extends Tracker\Response
             return;
         }
 
+        if (!$tracker->shouldRecordStatistics()) {
+            Common::sendResponseCode(503);
+
+            if ($this->shouldSendResponse()) {
+                echo json_encode(['status' => 'error', 'tracked' => 0, 'invalid' => 0]);
+            }
+
+            return;
+        }
+
         if (!$this->shouldSendResponse()) {
             Common::sendResponseCode(204);
             return;
